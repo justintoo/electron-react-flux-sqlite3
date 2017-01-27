@@ -1,5 +1,9 @@
+start: install
+	npm start
+
 install:
 	npm install
+	./node_modules/.bin/electron-rebuild
 
 clean:
 	npm prune
@@ -9,17 +13,11 @@ clean:
 	rm -rf dist
 	find . -iname "\.DS_Store" -exec rm -f {} \;
 
-commit: clean
-	git add .
-	git commit -a
-
 package: package-all
 
 package-local: install
-	./node_modules/.bin/electron-rebuild
 	electron-packager .  --platform=darwin --arch=x64 --overwrite
 
 package-all: install
-	./node_modules/.bin/electron-rebuild
 	electron-packager .  --arch=x64 --overwrite
 
