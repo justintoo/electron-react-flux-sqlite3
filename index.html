@@ -3,17 +3,21 @@
   <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./css/photon.min.css">
+    <link rel="stylesheet" href="./css/theme.css">
+
+    <!-- Javascript -->
   </head>
   <body>
-    <h1>Hello World!</h1>
-    <!-- All of the Node.js APIs are available in this renderer process. -->
-    We are using Node.js <script>document.write(process.versions.node)</script>,
-    Chromium <script>document.write(process.versions.chrome)</script>,
-    and Electron <script>document.write(process.versions.electron)</script>.
+    <div id="app"></div>
   </body>
 
   <script>
     // You can also require other files to run in this process
     require('./renderer.js')
+    require('node-jsx').install();
+    require('./jsx/main.jsx');
   </script>
 </html>
