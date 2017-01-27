@@ -1,6 +1,5 @@
 install:
 	npm install
-	bower install
 
 clean:
 	npm prune
@@ -13,3 +12,14 @@ clean:
 commit: clean
 	git add .
 	git commit -a
+
+package: package-all
+
+package-local: install
+	./node_modules/.bin/electron-rebuild
+	electron-packager .  --platform=darwin --arch=x64 --overwrite
+
+package-all: install
+	./node_modules/.bin/electron-rebuild
+	electron-packager .  --arch=x64 --overwrite
+
