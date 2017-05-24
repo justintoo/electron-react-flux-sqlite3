@@ -9,13 +9,13 @@ var ResultRow = require('./ResultRow.jsx');
 var Index = React.createClass({
   getInitialState: function() {
       return {
-          items: []
+          progress: 0
       };
   },
 
   componentWillMount: function() {
-      emitter.on("store-changed", function(items) {
-          this.setState({ items: items });
+      emitter.on("store-changed", function(percent) {
+          this.setState({ progress: percent });
       }.bind(this));
   },
 
@@ -24,21 +24,18 @@ var Index = React.createClass({
   },
 
   render: function() {
-    var items = this.state.items;
+    var percent = Math.round(this.state.progress);
 
     return (
       <div className="pane">
         <table className="table-striped">
           <thead>
             <tr>
-              <th>Passed</th>
-              <th>Filename</th>
-              <th>Directory</th>
-              <th>Commandline</th>
+              <th>Progress</th>
             </tr>
           </thead>
           <tbody id="dbrows">
-            {items}
+            {percent}%
           </tbody>
         </table>
       </div>
@@ -46,7 +43,7 @@ var Index = React.createClass({
   }
 });
 
-var Store = function() {
+var Download = function() {
     dispatcher.register(function(payload) {
         switch (payload.type) {
             case "get-all-items":
@@ -56,26 +53,70 @@ var Store = function() {
     }.bind(this));
 
     this._all = function(done) {
-        var sqlite3 = require('sqlite3').verbose();
-        var file = '/tmp/electron-photon/dist/app/rose-results.db'
-        var db = new sqlite3.Database(file);
+        this._downloadFile({
+            remoteFile: "https://nodejs.org/dist/v0.12.7/node-v0.12.7.tar.gz",
+            localDirectory: "/tmp/node",
+            onProgress: function (received,total){
+                var percentage = (received * 100) / total;
+                console.log(percentage + "% | " + received + " bytes out of " + total + " bytes.");
+                return done(percentage);
+            }
+        }).then(function(){
+            //alert("File succesfully downloaded");
+        })
+    };
 
-        var larray = [];
+    this._notify = function(progress) {
+        emitter.emit("store-changed", progress);
+    };
 
-        db.all("SELECT filename, directory, passed, commandline FROM results", function(err, rows) {
-            // This code only gets called when the database returns with a response.
-            rows.forEach(function(row) {
-                larray.push(<ResultRow passed={row.passed} filename={row.filename} directory={row.directory} commandline={row.commandline}/>);
-            })
-            return done(larray);
+    /**
+     * Promise based download file method
+     */
+    this._downloadFile = function(configuration) {
+        var request = require('request');
+        var targz = require('node-tar.gz');
+
+        return new Promise(function(resolve, reject) {
+            // Save variable to know progress
+            var received_bytes = 0;
+            var total_bytes = 0;
+
+            var req = request({
+                method: 'GET',
+                uri: configuration.remoteFile
+            });
+
+            var out = targz().createWriteStream(configuration.localDirectory);
+            req.pipe(out);
+
+            req.on('response', function ( data ) {
+                // Change the total bytes value to get progress later.
+                total_bytes = parseInt(data.headers['content-length' ]);
+            });
+
+            // Get progress if callback exists
+            if(configuration.hasOwnProperty("onProgress")) {
+                req.on('data', function(chunk) {
+                    // Update the received bytes
+                    received_bytes += chunk.length;
+
+                    configuration.onProgress(received_bytes, total_bytes);
+                });
+            } else {
+                req.on('data', function(chunk) {
+                    // Update the received bytes
+                    received_bytes += chunk.length;
+                });
+            }
+
+            req.on('end', function() {
+                resolve();
+            });
         });
-    };
-
-    this._notify = function(items) {
-        emitter.emit("store-changed", items);
-    };
+    }
 };
 
-var ItemStore = new Store();
+var SpackDownload = new Download();
 
 module.exports = Index;
