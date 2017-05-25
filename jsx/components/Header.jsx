@@ -72,8 +72,13 @@ var Download = function() {
                 uri: configuration.remoteFile
             });
 
-            var out = targz().createWriteStream(configuration.localDirectory);
-            req.pipe(out);
+            try {
+                var out = targz().createWriteStream(configuration.localDirectory);
+                req.pipe(out);
+            } catch(err) {
+                // TODO: handle error
+                alert('Failed to untar file');
+            }
 
             req.on('response', function ( data ) {
                 // Change the total bytes value to get progress later.
@@ -94,6 +99,11 @@ var Download = function() {
                     received_bytes += chunk.length;
                 });
             }
+
+            request.on('error', function(err) {
+                // TODO: handle error
+                alert('There was an error with the download');
+            });
 
             req.on('end', function() {
                 resolve();
