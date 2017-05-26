@@ -27,6 +27,7 @@
     "jquery": "^2.1.4",
     "node-jsx": "^0.13.3",
     "node-tar.gz": "^1.0.0",
+    "progressbar.js": "^1.0.1",
     "react": "^0.14.2",
     "react-contextmenu": "^2.0.0",
     "react-dom": "^0.14.2",
